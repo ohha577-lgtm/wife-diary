@@ -4,101 +4,108 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <!-- 휴대폰 홈 화면에 추가했을 때 앱처럼 보이게 하는 설정 -->
-<meta name="theme-color" content="#d9638a">
+<meta name="theme-color" content="#6e6a63">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="나의 기록장">
 <title>나의 기록장</title>
+<!-- 앱 아이콘 (같은 폴더의 그림 파일을 사용) -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <style>
   /* ===== 색상과 글꼴 (여기 색을 바꾸면 전체 분위기가 바뀝니다) ===== */
   :root {
-    --main: #d9638a;        /* 대표 색 (분홍) */
-    --main-light: #fbe8ef;  /* 연한 대표 색 */
-    --bg: #faf7f8;          /* 바탕색 */
-    --text: #333;
-    --gray: #888;
-    --line: #eadfe3;
+    --main: #6e6a63;        /* 대표 색 (따뜻한 회색) */
+    --main-dark: #4f4b45;   /* 진한 회색 (강조 글자) */
+    --main-light: #efe9dc;  /* 연한 베이지 (요약 칸) */
+    --bg: #f8f5ee;          /* 바탕색 (미색) */
+    --card: #fffdf8;        /* 카드 색 (밝은 미색) */
+    --text: #3a3835;
+    --gray: #8a857c;
+    --line: #e3ddd0;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--bg); color: var(--text);
     font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
-    font-size: 17px;               /* 글씨를 조금 크게 */
+    font-size: 18.5px;               /* 글씨를 조금 크게 */
     padding-bottom: 90px;          /* 아래 탭 버튼에 가리지 않도록 */
   }
   header {
-    background: var(--main); color: white; padding: 14px 16px;
+    background: var(--main); color: #fbf8f1; padding: 14px 16px;
     display: flex; justify-content: space-between; align-items: center;
     position: sticky; top: 0; z-index: 10;
   }
-  header h1 { font-size: 20px; margin: 0; }
-  header button { background: rgba(255,255,255,.25); color: white; border: none; padding: 6px 10px; border-radius: 8px; font-size: 14px; }
+  header h1 { font-size: 21.5px; margin: 0; }
+  header button { background: rgba(255,255,255,.25); color: white; border: none; padding: 6px 10px; border-radius: 8px; font-size: 15.5px; }
 
   main { max-width: 640px; margin: 0 auto; padding: 14px; }
-  .card { background: white; border-radius: 14px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
-  .card h2 { font-size: 18px; margin: 0 0 12px; color: var(--main); }
+  .card { background: var(--card); border-radius: 14px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .card h2 { font-size: 19.5px; margin: 0 0 12px; color: var(--main-dark); }
 
-  label { display: block; font-size: 15px; color: var(--gray); margin: 10px 0 4px; }
+  label { display: block; font-size: 16.5px; color: var(--gray); margin: 10px 0 4px; }
   input, select, textarea {
-    width: 100%; padding: 11px; font-size: 17px; border: 1px solid var(--line);
-    border-radius: 10px; background: #fff; font-family: inherit;
+    width: 100%; padding: 11px; font-size: 18.5px; border: 1px solid var(--line);
+    border-radius: 10px; background: #fff; color: var(--text); font-family: inherit;
   }
   textarea { min-height: 70px; resize: vertical; }
   .row { display: flex; gap: 10px; }
   .row > div { flex: 1; min-width: 0; }   /* 칸이 화면 밖으로 넘치지 않게 */
   input[type=date], input[type=time] { min-width: 0; -webkit-appearance: none; appearance: none; min-height: 46px; }
 
-  .btn { width: 100%; margin-top: 14px; padding: 14px; font-size: 18px; font-weight: bold;
-         background: var(--main); color: white; border: none; border-radius: 12px; }
+  .btn { width: 100%; margin-top: 14px; padding: 14px; font-size: 19.5px; font-weight: bold;
+         background: var(--main); color: #fbf8f1; border: none; border-radius: 12px; }
   .btn:active { opacity: .8; }
 
   /* 기록 목록 */
   .item { border-bottom: 1px solid var(--line); padding: 12px 0; display: flex; gap: 10px; align-items: flex-start; }
   .item:last-child { border-bottom: none; }
   .item .body { flex: 1; }
-  .item .date { font-size: 14px; color: var(--gray); }
-  .item .title { font-size: 17px; font-weight: bold; margin: 2px 0; }
-  .item .memo { font-size: 15px; color: #555; white-space: pre-wrap; }
-  .del { background: none; border: none; color: #bbb; font-size: 20px; padding: 0 4px; }
+  .item .date { font-size: 15.5px; color: var(--gray); }
+  .item .title { font-size: 18.5px; font-weight: bold; margin: 2px 0; }
+  .item .memo { font-size: 16.5px; color: #555; white-space: pre-wrap; }
+  .del { background: none; border: none; color: #bbb; font-size: 21.5px; padding: 0 4px; }
   .done .title { text-decoration: line-through; color: #aaa; }
   .check { width: 26px; height: 26px; margin-top: 4px; accent-color: var(--main); }
   .empty { color: var(--gray); text-align: center; padding: 20px 0; }
-  .subhead { font-size: 15px; color: var(--main); font-weight: bold; margin: 8px 0 0; }
+  .subhead { font-size: 16.5px; color: var(--main-dark); font-weight: bold; margin: 8px 0 0; }
 
   /* 혈압 상태 표시 */
-  .badge { display: inline-block; font-size: 13px; padding: 2px 8px; border-radius: 20px; color: white; margin-left: 6px; vertical-align: middle; }
-  .b-normal { background: #4caf50; } .b-caution { background: #c9a800; }
-  .b-pre { background: #ff9800; }   .b-high { background: #e53935; }
+  .badge { display: inline-block; font-size: 14.5px; padding: 2px 8px; border-radius: 20px; color: white; margin-left: 6px; vertical-align: middle; }
+  .b-normal { background: #6b9a6e; } .b-caution { background: #b8a14a; }
+  .b-pre { background: #c98a4b; }   .b-high { background: #b85450; }
 
   /* 요약 숫자 */
   .summary { display: flex; gap: 10px; text-align: center; }
   .summary div { flex: 1; background: var(--main-light); border-radius: 12px; padding: 10px 4px; }
-  .summary b { display: block; font-size: 22px; color: var(--main); }
-  .summary span { font-size: 13px; color: var(--gray); }
+  .summary b { display: block; font-size: 23.5px; color: var(--main-dark); }
+  .summary span { font-size: 14.5px; color: var(--gray); }
 
   .chart { width: 100%; height: 180px; }
-  .stars { color: #f5a623; }
+  .stars { color: #b8963e; }
 
   /* 아래쪽 탭 버튼 */
   nav {
-    position: fixed; bottom: 0; left: 0; right: 0; background: white;
+    position: fixed; bottom: 0; left: 0; right: 0; background: var(--card);
     display: flex; border-top: 1px solid var(--line);
     padding-bottom: env(safe-area-inset-bottom);
   }
   nav button {
     flex: 1; background: none; border: none; padding: 10px 0 12px;
-    font-size: 13px; color: var(--gray); font-family: inherit;
+    font-size: 14.5px; color: var(--gray); font-family: inherit;
   }
-  nav button .ico { display: block; font-size: 24px; }
-  nav button.on { color: var(--main); font-weight: bold; }
+  nav button .ico { display: block; font-size: 25.5px; }
+  nav button.on { color: var(--main-dark); font-weight: bold; background: var(--main-light); }
 
   .page { display: none; }
   .page.on { display: block; }
 
   /* 로그인 화면 */
   #loginBox { text-align: center; padding: 80px 20px; }
-  #loginBox h1 { color: var(--main); font-size: 28px; }
+  #loginBox h1 { color: var(--main-dark); font-size: 29.5px; }
+  #loginBox img { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
   #loginBox p { color: var(--gray); }
   #loginBox .btn { max-width: 320px; }
   #loading { text-align: center; padding: 100px 0; color: var(--gray); }
@@ -111,10 +118,11 @@
 
 <!-- ========== 로그인 화면 ========== -->
 <div id="loginBox" style="display:none">
-  <h1>🌸 나의 기록장</h1>
+  <img src="icon-192.png" alt="기록장 아이콘">
+  <h1>나의 기록장</h1>
   <p>일정 · 혈압 · 몸무게 · 여행을<br>한 곳에 기록해요</p>
   <button class="btn" id="loginBtn">구글 계정으로 시작하기</button>
-  <div id="diag" style="display:none;text-align:left;background:#fff3f3;border:1px solid #f0b4b4;border-radius:12px;padding:14px;margin:20px auto;max-width:420px;font-size:15px;word-break:break-all"></div>
+  <div id="diag" style="display:none;text-align:left;background:#fff3f3;border:1px solid #f0b4b4;border-radius:12px;padding:14px;margin:20px auto;max-width:420px;font-size:16.5px;word-break:break-all"></div>
 </div>
 
 <!-- ========== 로그인 후 앱 화면 ========== -->
@@ -219,7 +227,7 @@
         <button class="btn" id="tSave">저장하기</button>
       </div>
       <div class="card">
-        <h2>나의 여행 <span id="tCount" style="font-size:14px;color:#888"></span></h2>
+        <h2>나의 여행 <span id="tCount" style="font-size:15.5px;color:#888"></span></h2>
         <div id="tList"></div>
       </div>
     </section>
@@ -394,13 +402,13 @@ function drawBp(list) {
   // 그래프 (최근 14번, 오래된 것부터)
   const g = list.slice(0, 14).reverse();
   drawChart($("bChart"), g.map(r => r.date.slice(5).replace("-", "/")),
-    [{ values: g.map(r => r.sys), color: "#e53935" }, { values: g.map(r => r.dia), color: "#1e88e5" }]);
+    [{ values: g.map(r => r.sys), color: "#b85450" }, { values: g.map(r => r.dia), color: "#5b7ea4" }]);
   // 목록
   $("bList").innerHTML = list.length ? list.slice(0, 60).map(r => {
     const [txt, cls] = bpLevel(r.sys, r.dia);
     return `<div class="item"><div class="body">
         <div class="date">${prettyDate(r.date)} · ${esc(r.when)}</div>
-        <div class="title">${r.sys} / ${r.dia} <span style="font-weight:normal;font-size:15px">${r.pulse ? "· 맥박 " + r.pulse : ""}</span>
+        <div class="title">${r.sys} / ${r.dia} <span style="font-weight:normal;font-size:16.5px">${r.pulse ? "· 맥박 " + r.pulse : ""}</span>
           <span class="badge ${cls}">${txt}</span></div>
         ${r.memo ? `<div class="memo">${esc(r.memo)}</div>` : ""}
       </div><button class="del" data-del="${r.id}">✕</button></div>`;
@@ -425,10 +433,10 @@ function drawWeight(list) {
     <div><b>${diff(now, prev)}</b><span>지난번보다</span></div>
     <div><b>${diff(now, first)}</b><span>처음보다</span></div>`;
   const g = list.slice(0, 20).reverse();
-  drawChart($("wChart"), g.map(r => r.date.slice(5).replace("-", "/")), [{ values: g.map(r => r.kg), color: "#d9638a" }]);
+  drawChart($("wChart"), g.map(r => r.date.slice(5).replace("-", "/")), [{ values: g.map(r => r.kg), color: "#6e6a63" }]);
   $("wList").innerHTML = list.length ? list.slice(0, 60).map((r, i) => {
     const before = list[i + 1]?.kg;
-    const change = before != null ? ` <span style="font-size:14px;color:${r.kg > before ? "#e53935" : "#1e88e5"}">(${diff(r.kg, before)})</span>` : "";
+    const change = before != null ? ` <span style="font-size:15.5px;color:${r.kg > before ? "#b85450" : "#5b7ea4"}">(${diff(r.kg, before)})</span>` : "";
     return `<div class="item"><div class="body">
         <div class="date">${prettyDate(r.date)}</div>
         <div class="title">${r.kg} kg${change}</div>
@@ -487,7 +495,7 @@ $("loginBtn").onclick = () =>
 async function showLoginError(e) {
   const box = $("diag");
   box.style.display = "block";
-  box.innerHTML = `<b>로그인 실패</b><br>오류: ${esc(e.code)}<br><span style="font-size:13px">${esc(e.message)}</span><br><br>연결 검사 중...`;
+  box.innerHTML = `<b>로그인 실패</b><br>오류: ${esc(e.code)}<br><span style="font-size:14.5px">${esc(e.message)}</span><br><br>연결 검사 중...`;
   // 세 군데 서버에 연결이 되는지 하나씩 확인
   async function test(name, url, opts) {
     try { const r = await fetch(url, opts); return `${name}: ✅ 연결됨${r.type === "opaque" ? "" : " (" + r.status + ")"}`; }
@@ -499,9 +507,9 @@ async function showLoginError(e) {
     await test("③ 로그인 창 주소", `https://${firebaseConfig.authDomain}/__/auth/iframe.js`, { mode: "no-cors" }),
     await test("④ 토큰 서버", `https://securetoken.googleapis.com/`, { mode: "no-cors" }),
   ];
-  box.innerHTML = `<b>로그인 실패</b><br>오류: ${esc(e.code)}<br><span style="font-size:13px">${esc(e.message)}</span><br><br>`
+  box.innerHTML = `<b>로그인 실패</b><br>오류: ${esc(e.code)}<br><span style="font-size:14.5px">${esc(e.message)}</span><br><br>`
     + results.join("<br>")
-    + `<br><br><span style="font-size:13px">브라우저: ${esc(navigator.userAgent)}</span>`
+    + `<br><br><span style="font-size:14.5px">브라우저: ${esc(navigator.userAgent)}</span>`
     + `<br><br>👉 이 화면을 캡처해서 Claude에게 보여 주세요.`;
 }
 $("logoutBtn").onclick = () => { if (confirm("로그아웃할까요?")) signOut(auth); };

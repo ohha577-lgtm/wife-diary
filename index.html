@@ -114,6 +114,7 @@
   <h1>🌸 나의 기록장</h1>
   <p>일정 · 혈압 · 몸무게 · 여행을<br>한 곳에 기록해요</p>
   <button class="btn" id="loginBtn">구글 계정으로 시작하기</button>
+  <div id="diag" style="display:none;text-align:left;background:#fff3f3;border:1px solid #f0b4b4;border-radius:12px;padding:14px;margin:20px auto;max-width:420px;font-size:15px;word-break:break-all"></div>
 </div>
 
 <!-- ========== 로그인 후 앱 화면 ========== -->
@@ -235,17 +236,17 @@
 
 <script type="module">
 // =====================================================================
-//  ★★★ 여기만 바꾸면 됩니다 ★★★
+//  ★★★ Firebase 설정값 (wife-diary 프로젝트 — 이미 넣어 둠) ★★★
 //  Firebase 콘솔에서 복사한 firebaseConfig 내용을
 //  아래 { } 안의 6~7줄과 통째로 바꿔 붙여 넣으세요.
 // =====================================================================
 const firebaseConfig = {
-  apiKey: "여기에-붙여넣기",
-  authDomain: "여기에-붙여넣기",
-  projectId: "여기에-붙여넣기",
-  storageBucket: "여기에-붙여넣기",
-  messagingSenderId: "여기에-붙여넣기",
-  appId: "여기에-붙여넣기"
+  apiKey: "AIzaSyDEL6CPE7YuftUxVuhd5EOqtB6Q9eBCTmE",
+  authDomain: "wife-diary.firebaseapp.com",
+  projectId: "wife-diary",
+  storageBucket: "wife-diary.firebasestorage.app",
+  messagingSenderId: "271446974213",
+  appId: "1:271446974213:web:ee8e9409e5c9daffaee16c"
 };
 // =====================================================================
 //  아래는 건드리지 않아도 됩니다.
@@ -480,7 +481,29 @@ document.querySelectorAll("nav button").forEach(btn => {
 //  로그인 / 로그아웃
 // =====================================================================
 $("loginBtn").onclick = () =>
-  signInWithPopup(auth, new GoogleAuthProvider()).catch(e => alert("로그인 실패: " + e.code));
+  signInWithPopup(auth, new GoogleAuthProvider()).catch(e => showLoginError(e));
+
+// ---------- 로그인이 안 될 때 원인을 화면에 보여 주는 진단 기능 ----------
+async function showLoginError(e) {
+  const box = $("diag");
+  box.style.display = "block";
+  box.innerHTML = `<b>로그인 실패</b><br>오류: ${esc(e.code)}<br><span style="font-size:13px">${esc(e.message)}</span><br><br>연결 검사 중...`;
+  // 세 군데 서버에 연결이 되는지 하나씩 확인
+  async function test(name, url, opts) {
+    try { const r = await fetch(url, opts); return `${name}: ✅ 연결됨${r.type === "opaque" ? "" : " (" + r.status + ")"}`; }
+    catch (err) { return `${name}: ❌ 막힘`; }
+  }
+  const results = [
+    await test("① 구글 로그인 서버", `https://identitytoolkit.googleapis.com/v1/projects?key=${firebaseConfig.apiKey}`),
+    await test("② 구글 로그인 도우미", "https://apis.google.com/js/api.js", { mode: "no-cors" }),
+    await test("③ 로그인 창 주소", `https://${firebaseConfig.authDomain}/__/auth/iframe.js`, { mode: "no-cors" }),
+    await test("④ 토큰 서버", `https://securetoken.googleapis.com/`, { mode: "no-cors" }),
+  ];
+  box.innerHTML = `<b>로그인 실패</b><br>오류: ${esc(e.code)}<br><span style="font-size:13px">${esc(e.message)}</span><br><br>`
+    + results.join("<br>")
+    + `<br><br><span style="font-size:13px">브라우저: ${esc(navigator.userAgent)}</span>`
+    + `<br><br>👉 이 화면을 캡처해서 Claude에게 보여 주세요.`;
+}
 $("logoutBtn").onclick = () => { if (confirm("로그아웃할까요?")) signOut(auth); };
 
 onAuthStateChanged(auth, user => {

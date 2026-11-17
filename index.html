@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- 휴대폰 홈 화면에 추가했을 때 앱처럼 보이게 하는 설정 -->
+<meta name="theme-color" content="#d9638a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="나의 기록장">
+<title>나의 기록장</title>
+
+<style>
+  /* ===== 색상과 글꼴 (여기 색을 바꾸면 전체 분위기가 바뀝니다) ===== */
+  :root {
+    --main: #d9638a;        /* 대표 색 (분홍) */
+    --main-light: #fbe8ef;  /* 연한 대표 색 */
+    --bg: #faf7f8;          /* 바탕색 */
+    --text: #333;
+    --gray: #888;
+    --line: #eadfe3;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    font-size: 17px;               /* 글씨를 조금 크게 */
+    padding-bottom: 90px;          /* 아래 탭 버튼에 가리지 않도록 */
+  }
+  header {
+    background: var(--main); color: white; padding: 14px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; z-index: 10;
+  }
+  header h1 { font-size: 20px; margin: 0; }
+  header button { background: rgba(255,255,255,.25); color: white; border: none; padding: 6px 10px; border-radius: 8px; font-size: 14px; }
+
+  main { max-width: 640px; margin: 0 auto; padding: 14px; }
+  .card { background: white; border-radius: 14px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .card h2 { font-size: 18px; margin: 0 0 12px; color: var(--main); }
+
+  label { display: block; font-size: 15px; color: var(--gray); margin: 10px 0 4px; }
+  input, select, textarea {
+    width: 100%; padding: 11px; font-size: 17px; border: 1px solid var(--line);
+    border-radius: 10px; background: #fff; font-family: inherit;
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  .row { display: flex; gap: 10px; }
+  .row > div { flex: 1; min-width: 0; }   /* 칸이 화면 밖으로 넘치지 않게 */
+  input[type=date], input[type=time] { min-width: 0; -webkit-appearance: none; appearance: none; min-height: 46px; }
+
+  .btn { width: 100%; margin-top: 14px; padding: 14px; font-size: 18px; font-weight: bold;
+         background: var(--main); color: white; border: none; border-radius: 12px; }
+  .btn:active { opacity: .8; }
+
+  /* 기록 목록 */
+  .item { border-bottom: 1px solid var(--line); padding: 12px 0; display: flex; gap: 10px; align-items: flex-start; }
+  .item:last-child { border-bottom: none; }
+  .item .body { flex: 1; }
+  .item .date { font-size: 14px; color: var(--gray); }
+  .item .title { font-size: 17px; font-weight: bold; margin: 2px 0; }
+  .item .memo { font-size: 15px; color: #555; white-space: pre-wrap; }
+  .del { background: none; border: none; color: #bbb; font-size: 20px; padding: 0 4px; }
+  .done .title { text-decoration: line-through; color: #aaa; }
+  .check { width: 26px; height: 26px; margin-top: 4px; accent-color: var(--main); }
+  .empty { color: var(--gray); text-align: center; padding: 20px 0; }
+  .subhead { font-size: 15px; color: var(--main); font-weight: bold; margin: 8px 0 0; }
+
+  /* 혈압 상태 표시 */
+  .badge { display: inline-block; font-size: 13px; padding: 2px 8px; border-radius: 20px; color: white; margin-left: 6px; vertical-align: middle; }
+  .b-normal { background: #4caf50; } .b-caution { background: #c9a800; }
+  .b-pre { background: #ff9800; }   .b-high { background: #e53935; }
+
+  /* 요약 숫자 */
+  .summary { display: flex; gap: 10px; text-align: center; }
+  .summary div { flex: 1; background: var(--main-light); border-radius: 12px; padding: 10px 4px; }
+  .summary b { display: block; font-size: 22px; color: var(--main); }
+  .summary span { font-size: 13px; color: var(--gray); }
+
+  .chart { width: 100%; height: 180px; }
+  .stars { color: #f5a623; }
+
+  /* 아래쪽 탭 버튼 */
+  nav {
+    position: fixed; bottom: 0; left: 0; right: 0; background: white;
+    display: flex; border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  nav button {
+    flex: 1; background: none; border: none; padding: 10px 0 12px;
+    font-size: 13px; color: var(--gray); font-family: inherit;
+  }
+  nav button .ico { display: block; font-size: 24px; }
+  nav button.on { color: var(--main); font-weight: bold; }
+
+  .page { display: none; }
+  .page.on { display: block; }
+
+  /* 로그인 화면 */
+  #loginBox { text-align: center; padding: 80px 20px; }
+  #loginBox h1 { color: var(--main); font-size: 28px; }
+  #loginBox p { color: var(--gray); }
+  #loginBox .btn { max-width: 320px; }
+  #loading { text-align: center; padding: 100px 0; color: var(--gray); }
+</style>
+</head>
+<body>
+
+<!-- ========== 처음 열 때 잠깐 보이는 화면 ========== -->
+<div id="loading">불러오는 중...</div>
+
+<!-- ========== 로그인 화면 ========== -->
+<div id="loginBox" style="display:none">
+  <h1>🌸 나의 기록장</h1>
+  <p>일정 · 혈압 · 몸무게 · 여행을<br>한 곳에 기록해요</p>
+  <button class="btn" id="loginBtn">구글 계정으로 시작하기</button>
+</div>
+
+<!-- ========== 로그인 후 앱 화면 ========== -->
+<div id="app" style="display:none">
+  <header>
+    <h1 id="pageTitle">📅 일정</h1>
+    <button id="logoutBtn">로그아웃</button>
+  </header>
+
+  <main>
+    <!-- ---------- 1. 일정 탭 ---------- -->
+    <section class="page on" id="page-schedule">
+      <div class="card">
+        <h2>일정 추가</h2>
+        <div class="row">
+          <div><label>날짜</label><input type="date" id="sDate"></div>
+          <div><label>시간 (선택)</label><input type="time" id="sTime"></div>
+        </div>
+        <label>할 일 / 약속</label><input id="sTitle" placeholder="예) 병원 정기검진">
+        <label>메모 (선택)</label><textarea id="sMemo" placeholder="장소, 준비물 등"></textarea>
+        <button class="btn" id="sSave">저장하기</button>
+      </div>
+      <div class="card">
+        <h2>내 일정</h2>
+        <div id="sList"></div>
+      </div>
+    </section>
+
+    <!-- ---------- 2. 혈압 탭 ---------- -->
+    <section class="page" id="page-bp">
+      <div class="card">
+        <h2>혈압 기록</h2>
+        <div class="row">
+          <div><label>날짜</label><input type="date" id="bDate"></div>
+          <div><label>언제</label>
+            <select id="bWhen"><option>아침</option><option>점심</option><option>저녁</option><option>자기 전</option></select>
+          </div>
+        </div>
+        <div class="row">
+          <div><label>최고 (수축기)</label><input type="number" inputmode="numeric" id="bSys" placeholder="120"></div>
+          <div><label>최저 (이완기)</label><input type="number" inputmode="numeric" id="bDia" placeholder="80"></div>
+          <div><label>맥박</label><input type="number" inputmode="numeric" id="bPulse" placeholder="70"></div>
+        </div>
+        <label>메모 (선택)</label><input id="bMemo" placeholder="예) 약 먹고 30분 후">
+        <button class="btn" id="bSave">저장하기</button>
+      </div>
+      <div class="card">
+        <h2>최근 7번 평균</h2>
+        <div class="summary" id="bSummary"></div>
+      </div>
+      <div class="card">
+        <h2>혈압 그래프</h2>
+        <div id="bChart"></div>
+      </div>
+      <div class="card">
+        <h2>기록 목록</h2>
+        <div id="bList"></div>
+      </div>
+    </section>
+
+    <!-- ---------- 3. 몸무게 탭 ---------- -->
+    <section class="page" id="page-weight">
+      <div class="card">
+        <h2>몸무게 기록</h2>
+        <div class="row">
+          <div><label>날짜</label><input type="date" id="wDate"></div>
+          <div><label>몸무게 (kg)</label><input type="number" inputmode="decimal" step="0.1" id="wKg" placeholder="55.0"></div>
+        </div>
+        <label>메모 (선택)</label><input id="wMemo" placeholder="예) 아침 공복">
+        <button class="btn" id="wSave">저장하기</button>
+      </div>
+      <div class="card">
+        <h2>요약</h2>
+        <div class="summary" id="wSummary"></div>
+      </div>
+      <div class="card">
+        <h2>몸무게 그래프</h2>
+        <div id="wChart"></div>
+      </div>
+      <div class="card">
+        <h2>기록 목록</h2>
+        <div id="wList"></div>
+      </div>
+    </section>
+
+    <!-- ---------- 4. 여행기록 탭 ---------- -->
+    <section class="page" id="page-travel">
+      <div class="card">
+        <h2>여행 기록 추가</h2>
+        <label>어디로?</label><input id="tPlace" placeholder="예) 대만 가오슝">
+        <div class="row">
+          <div><label>출발일</label><input type="date" id="tStart"></div>
+          <div><label>도착일</label><input type="date" id="tEnd"></div>
+        </div>
+        <label>누구와?</label><input id="tWith" placeholder="예) 남편과">
+        <label>만족도</label>
+        <select id="tRate">
+          <option value="5">★★★★★ 최고!</option><option value="4">★★★★ 좋았어요</option>
+          <option value="3">★★★ 보통</option><option value="2">★★ 아쉬움</option><option value="1">★ 별로</option>
+        </select>
+        <label>기억에 남는 것</label><textarea id="tMemo" placeholder="맛집, 풍경, 에피소드 등"></textarea>
+        <button class="btn" id="tSave">저장하기</button>
+      </div>
+      <div class="card">
+        <h2>나의 여행 <span id="tCount" style="font-size:14px;color:#888"></span></h2>
+        <div id="tList"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 아래쪽 탭 버튼 4개 -->
+  <nav>
+    <button class="on" data-page="schedule" data-title="📅 일정"><span class="ico">📅</span>일정</button>
+    <button data-page="bp" data-title="❤️ 혈압"><span class="ico">❤️</span>혈압</button>
+    <button data-page="weight" data-title="⚖️ 몸무게"><span class="ico">⚖️</span>몸무게</button>
+    <button data-page="travel" data-title="✈️ 여행기록"><span class="ico">✈️</span>여행</button>
+  </nav>
+</div>
+
+<script type="module">
+// =====================================================================
+//  ★★★ 여기만 바꾸면 됩니다 ★★★
+//  Firebase 콘솔에서 복사한 firebaseConfig 내용을
+//  아래 { } 안의 6~7줄과 통째로 바꿔 붙여 넣으세요.
+// =====================================================================
+const firebaseConfig = {
+  apiKey: "여기에-붙여넣기",
+  authDomain: "여기에-붙여넣기",
+  projectId: "여기에-붙여넣기",
+  storageBucket: "여기에-붙여넣기",
+  messagingSenderId: "여기에-붙여넣기",
+  appId: "여기에-붙여넣기"
+};
+// =====================================================================
+//  아래는 건드리지 않아도 됩니다.
+// =====================================================================
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
+  from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, deleteDoc, updateDoc, doc, query, orderBy, onSnapshot, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+const $ = (id) => document.getElementById(id);
+let uid = null;            // 로그인한 사람의 고유 번호
+let stopListeners = [];    // 로그아웃할 때 실시간 연결을 끊기 위한 목록
+
+// ---------- 작은 도우미 함수들 ----------
+// 오늘 날짜를 "2027-01-12" 모양으로
+function today() {
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+// 글자 안의 특수문자를 안전하게 바꿈 (화면이 깨지지 않도록)
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+// "2027-01-12" → "2027.1.12 (화)"
+function prettyDate(s) {
+  if (!s) return "";
+  const d = new Date(s + "T00:00:00");
+  const w = "일월화수목금토"[d.getDay()];
+  return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()} (${w})`;
+}
+// 내 기록 보관함 위치: users / 내번호 / 종류(schedule, bp, weight, travel)
+function myCol(name) { return collection(db, "users", uid, name); }
+
+async function addRecord(name, data) {
+  await addDoc(myCol(name), { ...data, createdAt: serverTimestamp() });
+}
+async function removeRecord(name, id) {
+  if (confirm("이 기록을 지울까요?")) await deleteDoc(doc(db, "users", uid, name, id));
+}
+// 기록이 바뀔 때마다 자동으로 화면을 다시 그림
+function watch(name, sortField, drawFn) {
+  const q = query(myCol(name), orderBy(sortField, "desc"));
+  const stop = onSnapshot(q,
+    snap => drawFn(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+    err => alert("기록을 불러오지 못했어요: " + err.message));
+  stopListeners.push(stop);
+}
+// 지우기 버튼 연결
+function hookDelete(listEl, name) {
+  listEl.querySelectorAll("[data-del]").forEach(b =>
+    b.onclick = () => removeRecord(name, b.dataset.del));
+}
+
+// ---------- 간단한 꺾은선 그래프 ----------
+function drawChart(box, labels, lines) {
+  if (labels.length < 2) { box.innerHTML = '<div class="empty">기록이 2개 이상이면 그래프가 보여요</div>'; return; }
+  const W = 600, H = 180, P = 30;
+  const all = lines.flatMap(l => l.values).filter(v => v != null);
+  let min = Math.min(...all), max = Math.max(...all);
+  if (min === max) { min -= 1; max += 1; }
+  const pad = (max - min) * 0.15; min -= pad; max += pad;
+  const x = i => P + i * (W - P * 2) / (labels.length - 1);
+  const y = v => H - P - (v - min) * (H - P * 2) / (max - min);
+  let svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
+  lines.forEach(l => {
+    const pts = l.values.map((v, i) => `${x(i)},${y(v)}`).join(" ");
+    svg += `<polyline points="${pts}" fill="none" stroke="${l.color}" stroke-width="3"/>`;
+    l.values.forEach((v, i) => {
+      svg += `<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="${l.color}"/>`;
+    });
+    const last = l.values.length - 1;
+    svg += `<text x="${x(last) - 4}" y="${y(l.values[last]) - 8}" font-size="16" text-anchor="end" fill="${l.color}">${l.values[last]}</text>`;
+  });
+  svg += `<text x="${P}" y="${H - 6}" font-size="14" fill="#999">${labels[0]}</text>`;
+  svg += `<text x="${W - P}" y="${H - 6}" font-size="14" fill="#999" text-anchor="end">${labels[labels.length - 1]}</text>`;
+  box.innerHTML = svg + "</svg>";
+}
+
+// =====================================================================
+//  1. 일정
+// =====================================================================
+$("sSave").onclick = async () => {
+  const title = $("sTitle").value.trim();
+  if (!$("sDate").value || !title) return alert("날짜와 할 일을 적어 주세요.");
+  await addRecord("schedule", { date: $("sDate").value, time: $("sTime").value, title, memo: $("sMemo").value.trim(), done: false });
+  $("sTitle").value = ""; $("sMemo").value = ""; $("sTime").value = "";
+};
+function drawSchedule(list) {
+  const t = today();
+  const upcoming = list.filter(r => r.date >= t).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  const past = list.filter(r => r.date < t);
+  const row = r => `
+    <div class="item ${r.done ? "done" : ""}">
+      <input type="checkbox" class="check" data-done="${r.id}" ${r.done ? "checked" : ""}>
+      <div class="body">
+        <div class="date">${prettyDate(r.date)} ${esc(r.time)}</div>
+        <div class="title">${esc(r.title)}</div>
+        ${r.memo ? `<div class="memo">${esc(r.memo)}</div>` : ""}
+      </div>
+      <button class="del" data-del="${r.id}">✕</button>
+    </div>`;
+  let html = '<div class="subhead">다가오는 일정</div>';
+  html += upcoming.length ? upcoming.map(row).join("") : '<div class="empty">예정된 일정이 없어요</div>';
+  if (past.length) html += '<div class="subhead" style="margin-top:16px">지난 일정</div>' + past.slice(0, 30).map(row).join("");
+  $("sList").innerHTML = html;
+  hookDelete($("sList"), "schedule");
+  $("sList").querySelectorAll("[data-done]").forEach(c =>
+    c.onchange = () => updateDoc(doc(db, "users", uid, "schedule", c.dataset.done), { done: c.checked }));
+}
+
+// =====================================================================
+//  2. 혈압  (대한고혈압학회 기준으로 색 표시)
+// =====================================================================
+function bpLevel(s, d) {
+  if (s >= 140 || d >= 90) return ["고혈압", "b-high"];
+  if (s >= 130 || d >= 80) return ["고혈압 전단계", "b-pre"];
+  if (s >= 120)            return ["주의", "b-caution"];
+  return ["정상", "b-normal"];
+}
+$("bSave").onclick = async () => {
+  const sys = Number($("bSys").value), dia = Number($("bDia").value), pulse = Number($("bPulse").value) || null;
+  if (!$("bDate").value || !sys || !dia) return alert("날짜와 최고·최저 혈압을 적어 주세요.");
+  const order = { "아침": 1, "점심": 2, "저녁": 3, "자기 전": 4 }[$("bWhen").value];
+  await addRecord("bp", { date: $("bDate").value, when: $("bWhen").value, sort: `${$("bDate").value}-${order}`,
+                          sys, dia, pulse, memo: $("bMemo").value.trim() });
+  $("bSys").value = ""; $("bDia").value = ""; $("bPulse").value = ""; $("bMemo").value = "";
+};
+function drawBp(list) {
+  // 요약 (최근 7번 평균)
+  const recent = list.slice(0, 7);
+  const avg = k => {
+    const nums = recent.map(r => r[k]).filter(v => v);          // 값이 있는 것만
+    return nums.length ? Math.round(nums.reduce((a, b) => a + b, 0) / nums.length) : "-";
+  };
+  $("bSummary").innerHTML = `
+    <div><b>${avg("sys")}</b><span>최고</span></div>
+    <div><b>${avg("dia")}</b><span>최저</span></div>
+    <div><b>${avg("pulse")}</b><span>맥박</span></div>`;
+  // 그래프 (최근 14번, 오래된 것부터)
+  const g = list.slice(0, 14).reverse();
+  drawChart($("bChart"), g.map(r => r.date.slice(5).replace("-", "/")),
+    [{ values: g.map(r => r.sys), color: "#e53935" }, { values: g.map(r => r.dia), color: "#1e88e5" }]);
+  // 목록
+  $("bList").innerHTML = list.length ? list.slice(0, 60).map(r => {
+    const [txt, cls] = bpLevel(r.sys, r.dia);
+    return `<div class="item"><div class="body">
+        <div class="date">${prettyDate(r.date)} · ${esc(r.when)}</div>
+        <div class="title">${r.sys} / ${r.dia} <span style="font-weight:normal;font-size:15px">${r.pulse ? "· 맥박 " + r.pulse : ""}</span>
+          <span class="badge ${cls}">${txt}</span></div>
+        ${r.memo ? `<div class="memo">${esc(r.memo)}</div>` : ""}
+      </div><button class="del" data-del="${r.id}">✕</button></div>`;
+  }).join("") : '<div class="empty">아직 기록이 없어요</div>';
+  hookDelete($("bList"), "bp");
+}
+
+// =====================================================================
+//  3. 몸무게
+// =====================================================================
+$("wSave").onclick = async () => {
+  const kg = Number($("wKg").value);
+  if (!$("wDate").value || !kg) return alert("날짜와 몸무게를 적어 주세요.");
+  await addRecord("weight", { date: $("wDate").value, kg, memo: $("wMemo").value.trim() });
+  $("wKg").value = ""; $("wMemo").value = "";
+};
+function drawWeight(list) {
+  const now = list[0]?.kg, prev = list[1]?.kg, first = list[list.length - 1]?.kg;
+  const diff = (a, b) => (a == null || b == null) ? "-" : ((a - b > 0 ? "+" : "") + (a - b).toFixed(1));
+  $("wSummary").innerHTML = `
+    <div><b>${now ?? "-"}</b><span>지금 (kg)</span></div>
+    <div><b>${diff(now, prev)}</b><span>지난번보다</span></div>
+    <div><b>${diff(now, first)}</b><span>처음보다</span></div>`;
+  const g = list.slice(0, 20).reverse();
+  drawChart($("wChart"), g.map(r => r.date.slice(5).replace("-", "/")), [{ values: g.map(r => r.kg), color: "#d9638a" }]);
+  $("wList").innerHTML = list.length ? list.slice(0, 60).map((r, i) => {
+    const before = list[i + 1]?.kg;
+    const change = before != null ? ` <span style="font-size:14px;color:${r.kg > before ? "#e53935" : "#1e88e5"}">(${diff(r.kg, before)})</span>` : "";
+    return `<div class="item"><div class="body">
+        <div class="date">${prettyDate(r.date)}</div>
+        <div class="title">${r.kg} kg${change}</div>
+        ${r.memo ? `<div class="memo">${esc(r.memo)}</div>` : ""}
+      </div><button class="del" data-del="${r.id}">✕</button></div>`;
+  }).join("") : '<div class="empty">아직 기록이 없어요</div>';
+  hookDelete($("wList"), "weight");
+}
+
+// =====================================================================
+//  4. 여행기록
+// =====================================================================
+$("tSave").onclick = async () => {
+  const place = $("tPlace").value.trim();
+  if (!place || !$("tStart").value) return alert("여행지와 출발일을 적어 주세요.");
+  await addRecord("travel", { place, start: $("tStart").value, end: $("tEnd").value || $("tStart").value,
+                              with: $("tWith").value.trim(), rate: Number($("tRate").value), memo: $("tMemo").value.trim() });
+  $("tPlace").value = ""; $("tWith").value = ""; $("tMemo").value = ""; $("tEnd").value = "";
+};
+function drawTravel(list) {
+  $("tCount").textContent = list.length ? `(총 ${list.length}번)` : "";
+  $("tList").innerHTML = list.length ? list.map(r => {
+    const nights = Math.round((new Date(r.end) - new Date(r.start)) / 86400000);
+    const len = nights > 0 ? `${nights}박 ${nights + 1}일` : "당일";
+    return `<div class="item"><div class="body">
+        <div class="date">${prettyDate(r.start)} ~ ${prettyDate(r.end)} · ${len}</div>
+        <div class="title">✈️ ${esc(r.place)} <span class="stars">${"★".repeat(r.rate || 0)}</span></div>
+        ${r.with ? `<div class="date">함께: ${esc(r.with)}</div>` : ""}
+        ${r.memo ? `<div class="memo">${esc(r.memo)}</div>` : ""}
+      </div><button class="del" data-del="${r.id}">✕</button></div>`;
+  }).join("") : '<div class="empty">첫 여행을 기록해 보세요</div>';
+  hookDelete($("tList"), "travel");
+}
+
+// =====================================================================
+//  탭 바꾸기
+// =====================================================================
+document.querySelectorAll("nav button").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll("nav button").forEach(b => b.classList.remove("on"));
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("on"));
+    btn.classList.add("on");
+    $("page-" + btn.dataset.page).classList.add("on");
+    $("pageTitle").textContent = btn.dataset.title;
+    window.scrollTo(0, 0);
+  };
+});
+
+// =====================================================================
+//  로그인 / 로그아웃
+// =====================================================================
+$("loginBtn").onclick = () =>
+  signInWithPopup(auth, new GoogleAuthProvider()).catch(e => alert("로그인 실패: " + e.code));
+$("logoutBtn").onclick = () => { if (confirm("로그아웃할까요?")) signOut(auth); };
+
+onAuthStateChanged(auth, user => {
+  $("loading").style.display = "none";
+  stopListeners.forEach(stop => stop()); stopListeners = [];
+  if (user) {
+    uid = user.uid;
+    $("loginBox").style.display = "none";
+    $("app").style.display = "block";
+    ["sDate", "bDate", "wDate", "tStart"].forEach(id => $(id).value = today());
+    watch("schedule", "date", drawSchedule);
+    watch("bp", "sort", drawBp);
+    watch("weight", "date", drawWeight);
+    watch("travel", "start", drawTravel);
+  } else {
+    uid = null;
+    $("app").style.display = "none";
+    $("loginBox").style.display = "block";
+  }
+});
+</script>
+</body>
+</html>
